@@ -23,9 +23,9 @@ pub enum Value {
     Nil,
 }
 
-named!(digits_as_usize <&[u8], usize>, map!(digit, buf_to_usize));
-named!(nil <&[u8], Value>, map!(tag!("$-1\r\n"), |_| Nil));
-named!(string <&[u8], Value>,
+named!(digits_as_usize <usize>, map!(digit, buf_to_usize));
+named!(nil <Value>, map!(tag!("$-1\r\n"), |_| Nil));
+named!(string <Value>,
        chain!(
                   tag!("$")     ~
            len :  digits_as_usize ~
@@ -38,10 +38,10 @@ named!(string <&[u8], Value>,
 );
 
 /// Parse a length-prefixed binary-safe string
-named!(pub bulk_string <&[u8], Value>, alt!(nil | string));
+named!(pub bulk_string <Value>, alt!(nil | string));
 
 /// Parse a plus-prefixed human-readable string
-named!(pub status <&[u8], Value>,
+named!(pub status <Value>,
        chain!(
                 tag!("+") ~
            val: take_until!("\r\n") ~
@@ -52,7 +52,7 @@ named!(pub status <&[u8], Value>,
        );
 
 /// Parse a plus-prefixed human-readable error string
-named!(pub error <&[u8], Value>,
+named!(pub error <Value>,
        chain!(
                 tag!("-") ~
            val: take_until!("\r\n") ~
@@ -63,7 +63,7 @@ named!(pub error <&[u8], Value>,
        );
 
 /// Parse a signed 64-bit integer
-named!(pub integer <&[u8], Value>,
+named!(pub integer <Value>,
        chain!(
                  tag!(":") ~
            sign: map!(tag!("-"), |_| -1)? ~
@@ -74,11 +74,11 @@ named!(pub integer <&[u8], Value>,
            )
        );
 
-named!(value <&[u8], Value>, alt!(integer | bulk_string));
+named!(value <Value>, alt!(integer | bulk_string));
 
-named!(null_array <&[u8], Value>,
+named!(null_array <Value>,
        map!(tag!("*-1\r\n"), |_| Nil));
-named!(filled_array <&[u8], Value >,
+named!(filled_array <Value>,
        chain!(
                   tag!("*")     ~
             argc: digits_as_usize ~
@@ -95,7 +95,7 @@ named!(filled_array <&[u8], Value >,
 /// Parse an array of heterogeneous values
 ///
 /// Nil is allowed
-named!(pub array <&[u8], Value >,
+named!(pub array <Value>,
        alt!(null_array | filled_array));
 
 #[cfg(test)]
