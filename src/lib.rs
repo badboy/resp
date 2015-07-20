@@ -168,4 +168,9 @@ mod tests {
                          array(data)
                   );
     }
+
+    #[test]
+    fn parse_null_array() {
+        assert_eq!(IResult::Done(&b""[..], Nil), array(b"*-1\r\n"));
+    }
 }
