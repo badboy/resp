@@ -8,7 +8,7 @@ use resp::array;
 
 #[test]
 fn handle_empty_query() {
-    assert!(array(b"\r\n").is_err());
+    assert!(array(b"\r\n").is_incomplete());
 }
 
 #[test]
@@ -18,7 +18,7 @@ fn negative_multibulk_length() {
 
 #[test]
 fn out_of_range_multibulk_length() {
-    assert!(array(b"*20000000\r\n").is_err());
+    assert!(array(b"*20000000\r\n").is_incomplete());
     // "*invalid multibulk length*"
 }
 
@@ -36,7 +36,7 @@ fn negative_multibulk_payload_length() {
 
 #[test]
 fn out_of_range_multibulk_payload_length() {
-    assert!(array(b"*3\r\n$3\r\nSET\r\n$1\r\nx\r\n$2000000000\r\n").is_err());
+    assert!(array(b"*3\r\n$3\r\nSET\r\n$1\r\nx\r\n$2000000000\r\n").is_incomplete());
     // "*invalid bulk length*"
 }
 
