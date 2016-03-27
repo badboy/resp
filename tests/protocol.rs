@@ -8,7 +8,7 @@ use resp::array;
 
 #[test]
 fn handle_empty_query() {
-    assert!(array(b"\r\n").is_incomplete());
+    assert!(array(b"\r\n").is_err());
 }
 
 #[test]
