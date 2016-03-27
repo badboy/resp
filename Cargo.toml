@@ -3,6 +3,5 @@ name = "resp"
 version = "0.1.0"
 authors = ["Jan-Erik Rediger <janerik@fnordig.de>"]
 
-[dependencies.nom]
-git = "https://github.com/Geal/nom"
-branch = "1.0"
+[dependencies]
+nom = "1.0.0"
