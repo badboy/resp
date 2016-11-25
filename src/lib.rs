@@ -26,14 +26,13 @@ pub enum Value {
 named!(digits_as_usize <usize>, map!(digit, buf_to_usize));
 named!(nil <Value>, map!(tag!("$-1\r\n"), |_| Nil));
 named!(string <Value>,
-       chain!(
-                  tag!("$")     ~
-           len :  digits_as_usize ~
-                  tag!("\r\n")      ~
-           value: take!(len) ~
-                  tag!("\r\n")
-           ,
-           || { BulkString(value.to_vec()) }
+       do_parse!(
+                  tag!("$")     >>
+           len :  digits_as_usize >>
+                  tag!("\r\n")      >>
+           value: take!(len) >>
+                  tag!("\r\n") >>
+           ( BulkString(value.to_vec()) )
        )
 );
 
@@ -42,54 +41,43 @@ named!(pub bulk_string <Value>, alt!(nil | string));
 
 /// Parse a plus-prefixed human-readable string
 named!(pub status <Value>,
-       chain!(
-                tag!("+") ~
-           val: take_until!("\r\n") ~
-                tag!("\r\n")
-           ,
-           || { Status(String::from_utf8(val.to_owned()).unwrap()) }
-           )
-       );
+       do_parse!(
+                tag!("+") >>
+           val: take_until!("\r\n") >>
+                tag!("\r\n") >>
+           ( Status(String::from_utf8(val.to_owned()).unwrap()) )
+       ));
 
 /// Parse a plus-prefixed human-readable error string
 named!(pub error <Value>,
-       chain!(
-                tag!("-") ~
-           val: take_until!("\r\n") ~
-                tag!("\r\n")
-           ,
-           || { Error(String::from_utf8(val.to_owned()).unwrap()) }
-           )
-       );
+       do_parse!(
+                tag!("-") >>
+           val: take_until!("\r\n") >>
+                tag!("\r\n") >>
+           ( Error(String::from_utf8(val.to_owned()).unwrap()) )
+       ));
 
 /// Parse a signed 64-bit integer
 named!(pub integer <Value>,
-       chain!(
-                 tag!(":") ~
-           sign: map!(tag!("-"), |_| -1)? ~
-           val:  map!(digit, buf_to_i64) ~
-                 tag!("\r\n")
-           ,
-           || { Integer(sign.unwrap_or(1) as i64 *val) }
-           )
-       );
+       do_parse!(
+                 tag!(":") >>
+           sign: opt!(map!(tag!("-"), |_| -1)) >>
+           val:  map!(digit, buf_to_i64) >>
+                 tag!("\r\n") >>
+           ( Integer(sign.unwrap_or(1) as i64 *val) )
+       ));
 
 named!(value <Value>, alt!(integer | bulk_string));
 
 named!(null_array <Value>,
        map!(tag!("*-1\r\n"), |_| Nil));
 named!(filled_array <Value>,
-       chain!(
-                  tag!("*")     ~
-            argc: digits_as_usize ~
-                  tag!("\r\n")  ~
-            argv: count!(value, argc)
-            ,
-            || {
-                assert!(argv.len() == argc);
-                Array(argv.to_vec())
-            }
-
+       do_parse!(
+                  tag!("*")     >>
+            argc: digits_as_usize >>
+                  tag!("\r\n")  >>
+            argv: count!(value, argc) >>
+            (Array(argv.to_vec()))
        )
 );
 /// Parse an array of heterogeneous values
